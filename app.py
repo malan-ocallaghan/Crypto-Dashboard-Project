@@ -29,7 +29,7 @@ def get_historical_coin_data():
     # Define User Selection Mappings
     download_map = {"Daily": "1d", "Weekly": "1wk", "Monthly": "1mo", "Quarterly": "3mo", "Annual": "1y"}
     resample_map = {"Weekly": "W-MON", "Monthly": "MS", "Quarterly": "QS", "Annual": "AS-JAN"}
-    method_map = {"Open": "Open", "Close": "Close", "Adjusted Close": "Adj Close", "Trading Volume": "Volume", "Market Capitalisation": "Market Cap"}
+    method_map = {"Open": "Open", "Close": "Close", "Adjusted Close": "Adj Close", "Low": "Low", "High": "High", "Trading Volume": "Volume", "Market Capitalisation": "Market Cap"}
     # Recursive Function for Processing Data
     def process_data_request(request, download_freq):
         
@@ -162,7 +162,7 @@ def get_historical_coin_statistics():
     # Define User Selection Mappings
     download_map = {"Daily": "1d", "Weekly": "1wk", "Monthly": "1mo", "Quarterly": "3mo", "Annual": "1y"}
     resample_map = {"Weekly": "W-MON", "Monthly": "MS", "Quarterly": "QS", "Annual": "AS-JAN"}
-    method_map = {"Open": "Open", "Close": "Close", "Adjusted Close": "Adj Close", "Trading Volume": "Volume", "Market Capitalisation": "Market Cap"}
+    method_map = {"Open": "Open", "Close": "Close", "Adjusted Close": "Adj Close", "Low": "Low", "High": "High", "Trading Volume": "Volume", "Market Capitalisation": "Market Cap"}
     # Recursive Function for Processing Data
     def process_data_request(request, download_freq):
         
@@ -307,7 +307,7 @@ def get_historical_coin_matrix():
     # Define User Selection Mappings
     download_map = {"Daily": "1d", "Weekly": "1wk", "Monthly": "1mo", "Quarterly": "3mo", "Annual": "1y"}
     resample_map = {"Weekly": "W-MON", "Monthly": "MS", "Quarterly": "QS", "Annual": "AS-JAN"}
-    method_map = {"Open": "Open", "Close": "Close", "Adjusted Close": "Adj Close", "Trading Volume": "Volume", "Market Capitalisation": "Market Cap"}
+    method_map = {"Open": "Open", "Close": "Close", "Adjusted Close": "Adj Close", "Low": "Low", "High": "High", "Trading Volume": "Volume", "Market Capitalisation": "Market Cap"}
     # Recursive Function for Processing Data
     def process_data_request(request, download_freq):
         
@@ -450,7 +450,7 @@ def get_intraday_coin_data():
     # Define User Selection Mappings
     download_map = {'1 Minute': '1m', '2 Minutes': '2m', '5 Minutes': '5m', '15 Minutes': '15m', '30 Minutes': '30m', '60 Minutes': '1h', '90 Minutes': '90m', 'Daily': '1d'}
     resample_map = {"Weekly": "W-MON", "Monthly": "MS", "Quarterly": "QS", "Annual": "AS-JAN"}
-    method_map = {"Open": "Open", "Close": "Close", "Adjusted Close": "Adj Close", "Trading Volume": "Volume"}
+    method_map = {"Open": "Open", "Close": "Close", "Adjusted Close": "Adj Close", "Low": "Low", "High": "High", "Trading Volume": "Volume", "Market Capitalisation": "Market Cap"}
     # Recursive Function for Processing Data
     def process_data_request(request, download_freq):
         
