@@ -7,9 +7,26 @@ import pandas as pd
 from scipy import stats
 from functools import reduce
 from cryptocmd import CmcScraper
+from flask_sqlalchemy import SQLAlchemy
+
+
+# Added for User Registration
+
+
 
 app = Flask(__name__)
 CORS(app)
+
+
+# Added for User Registration
+
+
+
+
+
+
+
+
 
 # Function to Get the List of Available Tickers and Send to Front End
 @app.route('/api/getTickerOptions', methods=['GET'])
@@ -291,9 +308,20 @@ def get_historical_coin_statistics():
             stats_dict[statistic] = coin_data.sum()
         elif statistic == "Average":
             stats_dict[statistic] = coin_data.mean()
+        elif statistic == "Mode":
+            stats_dict[statistic] = coin_data.mode(axis=0).iloc[0]
         elif statistic == "Median":
             stats_dict[statistic] = coin_data.median()
-            # Develop the rest
+        elif statistic == "Minimum":
+            stats_dict[statistic] = coin_data.min()
+        elif statistic == "Maximum":
+            stats_dict[statistic] = coin_data.max()
+        elif statistic == "Variance":
+            stats_dict[statistic] = coin_data.var()
+        elif statistic == "Standard Deviation":
+            stats_dict[statistic] = coin_data.std()
+
+            
             
     stats = pd.DataFrame(stats_dict)
     stats = stats.reset_index(drop=True)
@@ -430,11 +458,11 @@ def get_historical_coin_matrix():
         colname = data_series[s]["name"]
         coin_data[colname] = processed_data[s]
     
+    # Correlation Matrix
     if statistic == "Correlation":
-        # Develop Code
         matrix = coin_data.corr()
+    # Covariance Matrix
     elif statistic == "Covariance":
-        # Develop Code
         matrix = coin_data.cov()
         
     # Convert to DataFrame
@@ -572,7 +600,7 @@ def get_intraday_coin_data():
         coin_data[colname] = processed_data[s]
     
     coin_data.reset_index(inplace = True)
-    coin_data['Datetime'] = coin_data['Datetime'].dt.strftime('%Y-%m-%d %H:%M:%S%z')
+    coin_data['Datetime'] = coin_data['Datetime'].dt.strftime('%Y-%m-%d %H:%M')
     coin_data = coin_data.to_json(orient='records')
     return coin_data
 
