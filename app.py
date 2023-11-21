@@ -13,7 +13,7 @@ import json
 import threading
 import mysql.connector
 
-
+# Initialising our Flask Server
 app = Flask(__name__)
 data_processing_lock = threading.Lock()
 app.secret_key = os.urandom(24)
@@ -32,26 +32,28 @@ def connect_to_database():
         database='cryptocanvasdb'
     )
 
-# Your existing user login endpoint
+# Login Endpoint
 @app.route('/api/login', methods=['POST'])
 def login_user():
+
+    # Receive the Login Data From the Front End
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    # Connect to the Database
+    connection = connect_to_database()
+    cursor = connection.cursor()
+
+    # Try Fetch User Details Based on the Provided Email
     try:
-        data = request.get_json()
-        email = data.get('email')
-        password = data.get('password')
-
-        # Connect to the database
-        connection = connect_to_database()
-        cursor = connection.cursor()
-
-        # Fetch user details based on the provided email
-        cursor.execute('SELECT id, firstName, lastName, email, activeWidgets, userDefaults, password FROM users WHERE email = %s', (email,))
+        cursor.execute('SELECT id, firstName, lastName, email, activeWidgets, userDefaults, collections, password FROM users WHERE email = %s', (email,))
         user = cursor.fetchone()
 
-        # Check if the user exists and the password is correct
-        if user and user[-1] == password:
-            
-            # User Data
+        # If Matching Account Exists And Passwords Match Return User Data
+        if user[-1] == password:
+
+            # Compile the User Data
             userData = {
                 'id': user[0],
                 'firstName': user[1],
@@ -59,63 +61,191 @@ def login_user():
                 'email': user[3],
                 'activeWidgets': user[4],
                 'userDefaults': user[5],
-                'password': user[6]
+                'collections': user[6],
+                'password': user[7]
             }
 
-            # Close the connection and return a success message
+            # Close theClose Connection and Return the User Data
             connection.close()
             return jsonify(userData)
+        
+        # If Matching Account Exists and Passwords Do Not Match Return Login Outcome as Incorrect Password
         else:
-            # Close the connection and return an error message
-            connection.close()
-            return jsonify({'error': 'Invalid credentials', 'success': False}), 401
 
-    except Exception as e:
-        print('Error authenticating user:', str(e))
-        return jsonify({'error': 'Internal server error', 'success': False}), 500
+            # Close the Connection and Return Login Outcome
+            connection.close()
+            loginFailure = 'incorrect_password'
+            return jsonify(loginFailure)
+
+
+
+    # If No Matching Email Found, Return the Login Outcome as Unrecognized Email
+    except:
+
+        # Close the Connection and Return Login Outcome
+        connection.close()
+        loginFailure = 'no_email'
+        return jsonify(loginFailure)
     
-# Endpoint to handle user registration
+# Registration Endpoint
 @app.route('/api/register', methods=['POST'])
 def register_user():
 
-    # Connect to the database
+    # Connect to the Data Base
     connection = connect_to_database()
     cursor = connection.cursor()
 
-    # Get user data from the request
+    # Get User Data From the Request
     data = request.get_json()
     firstName = data.get('firstName')
     lastName = data.get('lastName')
     email = data.get('email')
     password = data.get('password')
     activeWidgets = json.dumps([])
-    userDefaults = json.dumps({'defaultWidgetHeaderColor': 'rgb(255,255,255)', 'defaultWidgetBodyColor': 'rgb(255, 255, 255)'})
+    userDefaults = json.dumps({'defaultWidgetHeaderColor': None, 'defaultWidgetBodyColor': None})
 
-    # Insert the new user into the database
-    cursor.execute('INSERT INTO users (firstName, lastName, email, password, activeWidgets, userDefaults) VALUES (%s, %s, %s, %s, %s, %s)',
-                    (firstName, lastName, email, password, activeWidgets, userDefaults))
+    collections_data = [
+        {
+            'name': 'Bitcoin Prices',
+            'series': [
+                {'name': 'BTC-O', 'case': 'Base', 'children': 'BTC-USD', 'childrenNames': ['BTC-USD'], 'method': 'Open', 'color': 'rgb(255,114,159)', 'display': True},
+                {'name': 'BTC-C', 'case': 'Base', 'children': 'BTC-USD', 'childrenNames': ['BTC-USD'], 'method': 'Close', 'color': 'rgb(255,147,79)', 'display': True},
+                {'name': 'BTC-H', 'case': 'Base', 'children': 'BTC-USD', 'childrenNames': ['BTC-USD'], 'method': 'Low', 'color': 'rgb(247,239,129)', 'display': True},
+                {'name': 'BTC-L', 'case': 'Base', 'children': 'BTC-USD', 'childrenNames': ['BTC-USD'], 'method': 'High', 'color': 'rgb(104,176,171)', 'display': True},
+            ],
+            'favorite': True
+        },
+        {
+            'name': 'Ethereum Prices',
+            'series': [
+                {'name': 'ETH-O', 'case': 'Base', 'children': 'ETH-USD', 'childrenNames': ['ETH-USD'], 'method': 'Open', 'color': 'rgb(255,114,159)', 'display': True},
+                {'name': 'ETH-C', 'case': 'Base', 'children': 'ETH-USD', 'childrenNames': ['ETH-USD'], 'method': 'Close', 'color': 'rgb(255,147,79)', 'display': True},
+                {'name': 'ETH-H', 'case': 'Base', 'children': 'ETH-USD', 'childrenNames': ['ETH-USD'], 'method': 'Low', 'color': 'rgb(247,239,129)', 'display': True},
+                {'name': 'ETH-L', 'case': 'Base', 'children': 'ETH-USD', 'childrenNames': ['ETH-USD'], 'method': 'High', 'color': 'rgb(104,176,171)', 'display': True},
+            ],
+            'favorite': False
+        },
+                {
+            'name': 'Binance Prices', 
+            'series': [
+                {'name': 'BNB-O', 'case': 'Base', 'children': 'BNB-USD', 'childrenNames': ['BNB-USD'], 'method': 'Open', 'color': 'rgb(255,114,159)', 'display': True},
+                {'name': 'BNB-C', 'case': 'Base', 'children': 'BNB-USD', 'childrenNames': ['BNB-USD'], 'method': 'Close', 'color': 'rgb(255,147,79)', 'display': True},
+                {'name': 'BNB-H', 'case': 'Base', 'children': 'BNB-USD', 'childrenNames': ['BNB-USD'], 'method': 'Low', 'color': 'rgb(247,239,129)', 'display': True},
+                {'name': 'BNB-L', 'case': 'Base', 'children': 'BNB-USD', 'childrenNames': ['BNB-USD'], 'method': 'High', 'color': 'rgb(104,176,171)', 'display': True},
+            ],
+            'favorite': False
+        },
+                {
+            'name': 'Cardano Prices', 
+            'series': [
+                {'name': 'ADA-O', 'case': 'Base', 'children': 'ADA-USD', 'childrenNames': ['ADA-USD'], 'method': 'Open', 'color': 'rgb(255,114,159)', 'display': True},
+                {'name': 'ADA-C', 'case': 'Base', 'children': 'ADA-USD', 'childrenNames': ['ADA-USD'], 'method': 'Close', 'color': 'rgb(255,147,79)', 'display': True},
+                {'name': 'ADA-H', 'case': 'Base', 'children': 'ADA-USD', 'childrenNames': ['ADA-USD'], 'method': 'Low', 'color': 'rgb(247,239,129)', 'display': True},
+                {'name': 'ADA-L', 'case': 'Base', 'children': 'ADA-USD', 'childrenNames': ['ADA-USD'], 'method': 'High', 'color': 'rgb(104,176,171)', 'display': True},
+            ],
+            'favorite': False
+        },
+                {
+            'name': 'Solana Prices', 
+            'series': [
+                {'name': 'SOL-O', 'case': 'Base', 'children': 'SOL-USD', 'childrenNames': ['SOL-USD'], 'method': 'Open', 'color': 'rgb(255,114,159)', 'display': True},
+                {'name': 'SOL-C', 'case': 'Base', 'children': 'SOL-USD', 'childrenNames': ['SOL-USD'], 'method': 'Close', 'color': 'rgb(255,147,79)', 'display': True},
+                {'name': 'SOL-H', 'case': 'Base', 'children': 'SOL-USD', 'childrenNames': ['SOL-USD'], 'method': 'Low', 'color': 'rgb(247,239,129)', 'display': True},
+                {'name': 'SOL-L', 'case': 'Base', 'children': 'SOL-USD', 'childrenNames': ['SOL-USD'], 'method': 'High', 'color': 'rgb(104,176,171)', 'display': True},
+            ],
+            'favorite': False
+        },
+                {
+            'name': 'FTT Prices', 
+            'series': [
+                {'name': 'FTT-O', 'case': 'Base', 'children': 'FTT-USD', 'childrenNames': ['FTT-USD'], 'method': 'Open', 'color': 'rgb(255,114,159)', 'display': True},
+                {'name': 'FTT-C', 'case': 'Base', 'children': 'FTT-USD', 'childrenNames': ['FTT-USD'], 'method': 'Close', 'color': 'rgb(255,147,79)', 'display': True},
+                {'name': 'FTT-H', 'case': 'Base', 'children': 'FTT-USD', 'childrenNames': ['FTT-USD'], 'method': 'Low', 'color': 'rgb(247,239,129)', 'display': True},
+                {'name': 'FTT-L', 'case': 'Base', 'children': 'FTT-USD', 'childrenNames': ['FTT-USD'], 'method': 'High', 'color': 'rgb(104,176,171)', 'display': True},
+            ],
+            'favorite': False
+        },
+                        {
+            'name': 'Top-5 Coins', 
+            'series': [
+                {'name': 'BTC-C', 'case': 'Base', 'children': 'BTC-USD', 'childrenNames': ['BTC-USD'], 'method': 'Close', 'color': '#E9DF00', 'display': True},
+                {'name': 'ETH-C', 'case': 'Base', 'children': 'ETH-USD', 'childrenNames': ['ETH-USD'], 'method': 'Close', 'color': '#58A4B0', 'display': True},
+                {'name': 'BNB-C', 'case': 'Base', 'children': 'BNB-USD', 'childrenNames': ['BNB-USD'], 'method': 'Close', 'color': '#03FCBA', 'display': True},
+                {'name': 'ADA-C', 'case': 'Base', 'children': 'ADA-USD', 'childrenNames': ['ADA-USD'], 'method': 'Close', 'color': '#B744B8', 'display': True},
+                {'name': 'FTT-C', 'case': 'Base', 'children': 'FTT-USD', 'childrenNames': ['FTT-USD'], 'method': 'Close', 'color': '#D64933', 'display': True},
+            ],
+            'favorite': False
+        }
+    ]
+
+    collections = json.dumps(collections_data)
+
+    # Collect Existing User Information if Any
+    cursor.execute('SELECT id FROM users WHERE email = %s', (email,))
+    existing_user_id = cursor.fetchone()
+
+    # Check if the User Already Exists
+    if existing_user_id:
+        registrationFailure = 'existing_email'
+        return jsonify(registrationFailure)
+
+    else:
+
+        # Insert the new user into the database
+        cursor.execute('INSERT INTO users (firstName, lastName, email, password, activeWidgets, userDefaults, collections) VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                        (firstName, lastName, email, password, activeWidgets, userDefaults, collections))
+        
+        # Collect User Data After User Added to Database
+        cursor.execute('SELECT id, firstName, lastName, email, activeWidgets, userDefaults, collections, password FROM users WHERE email = %s', (email,))
+        user = cursor.fetchone()
+
+        # Compile the User Data
+        userData = {
+            'id': user[0],
+            'firstName': user[1],
+            'LastName': user[2],
+            'email': user[3],
+            'activeWidgets': user[4],
+            'userDefaults': user[5],
+            'collections': user[6],
+            'password': user[7]
+        }
+
+        # Commit the Changes and Close the Connection
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return jsonify(userData)
+
+# Your new update account settings endpoint
+@app.route('/api/updateDashboardSettings/<int:user_id>', methods=['POST'])
+def update_dashboard_settings(user_id):
+    try:
+
+        # Connect to the database
+        connection = connect_to_database()
+        cursor = connection.cursor()
+
+        # Get user data from the request
+        data = request.get_json()
+        collections = json.dumps(data.get('collectionList'))
+        userDefaults = json.dumps(data.get('userDefaults'))
+
+        # Update the user details in the database
+        cursor.execute('UPDATE users SET collections = %s, userDefaults = %s WHERE id = %s',
+                    (collections, userDefaults, user_id))
+
+        # Commit the changes and close the connection
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        return jsonify({'success': True})
+
+    except Exception as e:
+        print('Error updating dashboard settings:', str(e))
+        return jsonify({'error': 'Internal server error', 'success': False}), 500
     
-    cursor.execute('SELECT id, firstName, lastName, email, activeWidgets, userDefaults, password FROM users WHERE email = %s', (email,))
-    user = cursor.fetchone()
-
-                # User Data
-    userData = {
-        'id': user[0],
-        'firstName': user[1],
-        'LastName': user[2],
-        'email': user[3],
-        'activeWidgets': user[4],
-        'userDefaults': user[5],
-        'password': user[6]
-    }
-
-    # Commit the changes and close the connection
-    connection.commit()
-    cursor.close()
-    connection.close()
-
-    return jsonify(userData)
-
 # Your new update account settings endpoint
 @app.route('/api/updateAccountSettings/<int:user_id>', methods=['POST'])
 def update_account_settings(user_id):
